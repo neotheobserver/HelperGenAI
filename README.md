@@ -2,7 +2,15 @@
 
 Flutter based app that uses gemini api to aid people through description of images.
 
+It is designed such that users can upload multiple images either by capturing or selecting from gallery and ask questions.
+
+The text questions is optional. If the optional question is not asked an default question will be used.
+
+Currently 3 languages are supported. Nepali (Default), English, and Hindi
+
 ## Getting Started
+
+Api Key for Gemini is required. Get [Here for Free](https://ai.google.dev/aistudio)
 
 ### Option 1 (Easiest)
 
@@ -14,7 +22,7 @@ Apple users must follow Option 2 and also they might have to add certain permiss
 
 Download the source code and build by self
 
-This option requires flutter sdk and android studio installed on the system to build.
+This option requires flutter sdk and android studio installed on the system to build. [Install Flutter](https://docs.flutter.dev/get-started/install)
 
 After Setting up everything run
 
