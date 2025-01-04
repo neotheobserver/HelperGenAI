@@ -15,6 +15,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final TextEditingController _questionController = TextEditingController();
   List<File> _images = [];
   bool _loading = true;
   late String _currentApiKey;
@@ -61,17 +62,20 @@ class _MainScreenState extends State<MainScreen> {
 
   //Maybe can refactor this logic later
   Future<void> _makeApiCall() async {
-    setState(() {
-      _loading = true;
-    });
-
-    if (_images.isNotEmpty) {
+    final String controllerText = _questionController.text;
+    if (_images.isNotEmpty || controllerText.isNotEmpty) {
+      setState(() {
+        _loading = true;
+      });
       // Prepare the API call
       final model = GenerativeModel(
           model: 'gemini-1.5-flash-latest', apiKey: _currentApiKey);
+      final String question = controllerText.isNotEmpty &&
+              controllerText.split(" ").length > 1
+          ? "In lanugage $_currentLanguage answer: $controllerText"
+          : "Explain in detail the content of the image and what it is trying to potray using $_currentLanguage language";
       final content = [
-        Content.text(
-            "Explain in detail the content of the image and what it is trying to potray using $_currentLanguage language"),
+        Content.text(question),
         for (final image in _images)
           Content.data(lookupMimeType(image.path) ?? "image/jpg",
               image.readAsBytesSync())
@@ -105,10 +109,6 @@ class _MainScreenState extends State<MainScreen> {
           ),
         ),
       );
-    } else {
-      setState(() {
-        _loading = false;
-      });
     }
   }
 
@@ -181,6 +181,14 @@ class _MainScreenState extends State<MainScreen> {
                       child: Text('No image selected'),
                     ),
                   ),
+                TextField(
+                  controller: _questionController,
+                  decoration: const InputDecoration(
+                    labelText: 'Question (Optional)',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -194,14 +202,13 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ],
                 ),
-                if (_images.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: ElevatedButton(
-                      onPressed: _makeApiCall,
-                      child: const Text('Ask Gemini'),
-                    ),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton(
+                    onPressed: _makeApiCall,
+                    child: const Text('Ask Gemini'),
                   ),
+                ),
               ],
             ),
     );
