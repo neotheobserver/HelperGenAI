@@ -63,7 +63,8 @@ class _MainScreenState extends State<MainScreen> {
   //Maybe can refactor this logic later
   Future<void> _makeApiCall() async {
     final String controllerText = _questionController.text;
-    if (_images.isNotEmpty || controllerText.isNotEmpty) {
+    if (_images.isNotEmpty ||
+        (controllerText.isNotEmpty && controllerText.split(" ").length > 2)) {
       setState(() {
         _loading = true;
       });
@@ -71,7 +72,7 @@ class _MainScreenState extends State<MainScreen> {
       final model = GenerativeModel(
           model: 'gemini-1.5-flash-latest', apiKey: _currentApiKey);
       final String question = controllerText.isNotEmpty &&
-              controllerText.split(" ").length > 1
+              controllerText.split(" ").length > 2
           ? "In lanugage $_currentLanguage answer: $controllerText"
           : "Explain in detail the content of the image and what it is trying to potray using $_currentLanguage language";
       final content = [
@@ -88,7 +89,7 @@ class _MainScreenState extends State<MainScreen> {
                   [],
                   PromptFeedback(null, e.toString(), []),
                 ));
-        String? response = generatedResponse.text?.replaceAll("*", "");
+        response = generatedResponse.text?.replaceAll("*", "");
         response = response == null || response.isEmpty
             ? 'No reponse Recieved...'
             : response;
