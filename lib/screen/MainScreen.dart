@@ -24,7 +24,6 @@ class _MainScreenState extends State<MainScreen> {
   late String _currentLanguage;
   late double _currentFontSize;
   SpeechToText _speechToText = SpeechToText();
-  bool _speechEnabled = false;
   String _localeId = 'en_US';
 
   @override
@@ -34,7 +33,8 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _initSpeech() async {
-    _speechEnabled = await _speechToText.initialize();
+    // nned further work here
+    await _speechToText.initialize();
     List<String> priorities = [];
     if (_currentLanguage == 'Nepali') {
       priorities = ['ne', 'hi', 'en'];
