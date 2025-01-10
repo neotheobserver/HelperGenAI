@@ -6,6 +6,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import 'ResponseScreen.dart';
 
@@ -21,6 +23,9 @@ class _MainScreenState extends State<MainScreen> {
   late String _currentApiKey;
   late String _currentLanguage;
   late double _currentFontSize;
+  SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _localeId = 'en_US';
 
   @override
   void initState() {
@@ -28,12 +33,64 @@ class _MainScreenState extends State<MainScreen> {
     _loadData();
   }
 
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    List<String> priorities = [];
+    if (_currentLanguage == 'Nepali') {
+      priorities = ['ne', 'hi', 'en'];
+    } else if (_currentLanguage == 'Hindi') {
+      priorities = ['hi', 'en'];
+    } else {
+      priorities = ['en'];
+    }
+    List<LocaleName> locales = await _speechToText.locales();
+
+    if (locales.isNotEmpty) {
+      LocaleName? selectedLocale;
+      for (String priority in priorities) {
+        selectedLocale = locales.firstWhere(
+          (locale) => locale.localeId.startsWith(priority),
+          orElse: () => locales.first, //This is not a good idea
+        );
+        if (selectedLocale.localeId.startsWith(priority)) break;
+      }
+
+      //This should never happen
+      if (selectedLocale != null) {
+        _localeId = selectedLocale.localeId;
+      } else {
+        _localeId = 'en_US'; // Default fallback
+      }
+    }
+
+    setState(() {});
+  }
+
+  void _startListening() async {
+    await _speechToText.listen(
+        localeId: _localeId,
+        onResult: _onSpeechResult,
+        listenFor: const Duration(seconds: 20));
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _questionController.text = result.recognizedWords;
+    });
+  }
+
   Future<void> _loadData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _currentApiKey = prefs.getString('apiKey') ?? '';
     _currentLanguage = prefs.getString('language') ?? 'Nepali';
     _currentFontSize = prefs.getDouble('font') ?? 14;
-
+    _initSpeech();
     setState(() {
       _loading = false;
     });
@@ -105,9 +162,9 @@ class _MainScreenState extends State<MainScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => ResponseScreen(
-            response: response!,
-            fontSize: _currentFontSize,
-          ),
+              response: response!,
+              fontSize: _currentFontSize,
+              localeId: _localeId),
         ),
       );
     }
@@ -212,6 +269,12 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ],
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed:
+            _speechToText.isNotListening ? _startListening : _stopListening,
+        tooltip: 'Listen',
+        child: Icon(_speechToText.isNotListening ? Icons.mic_off : Icons.mic),
+      ),
     );
   }
 }
